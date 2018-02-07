@@ -3,7 +3,6 @@ const fs = require('fs');
 var textract = require('textract');
 var count = require('word-count');
 var natural = require('natural');
-var natural = require('natural');
 var WordPOS = require('wordpos'),
     wordpos = new WordPOS();
 var stringSimilarity = require('string-similarity');
@@ -16,164 +15,152 @@ var verbLenBase = 0;
 var wordCountTar = 0;
 var nounLenTar = 0;
 var adjLenTar = 0;
-var verbLentar = 0;
+var verbLenTar = 0;
 var isReady = false;
 
+// start the program
 console.log("Program Started");
-console.log("Reading Base File");
+console.log("\n\nReading Base File");
 console.log("-----------Stats-----------");
-var ext = path.extname('Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx');
-var fname = path.basename('Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx', ext);
+
+// print file name and extension of base file
+var ext = path.extname('Learning-HTML-CSS-and-Grid-960-in-an-hour.docx');
+var fname = path.basename('Learning-HTML-CSS-and-Grid-960-in-an-hour.docx', ext);
 console.log("File Name: "+fname+"\nFile Ext: "+ext);
 
-textract.fromFileWithPath('./Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx', {preserveLineBreaks:true},function( error, text ) {
+// start reading the file
+textract.fromFileWithPath('./Learning-HTML-CSS-and-Grid-960-in-an-hour.docx', {preserveLineBreaks:true},function( error, text ) {
   if(error) {
-      console.log("Cannot work with Base File");
+      console.log("\nCannot work with Base File");
   } else {
-    // console.log(text);
+    // save text for global function use
+    baseText = text;
+    // count words in file
     wordCountBase = count(text);
-    // console.log("Word Count: "+wordCount);
+    // get count of nouns in file
+    getNouns(text,"base");
+    // get count of verbs in file
+    getVerbs(text,"base");
+    // get count of adjectives in file
+    getAdj(text,"base");
+    console.log("\nCompleted scanning base file");
+  }
+})
+
+
+console.log("\n\nReading Target File");
+console.log("-----------Stats-----------");
+
+// print file name and extension of targer file
+var ext = path.extname('html.docx');
+var fname = path.basename('html.docx', ext);
+console.log("File Name: "+fname+"\nFile Ext: "+ext);
+
+// start reading file
+textract.fromFileWithPath('./html.docx', {preserveLineBreaks:true},function( error, text ) {
+  if(error) {
+      console.log("\nCannot work with Target File");
+  } else {
+    // save text for global function use
+    targetText = text;
+    // count words in file
+    wordCountTar = count(text);
+    // get count of nouns in file
+    getNouns(text,"target");
+    // get count of verbs in file
+    getVerbs(text,"target");
+    // get count of adjectives in file
+    getAdj(text,"target");
+    console.log("\nCompleted scanning Target file");
+    conclude();
+  }
+});
+
+function conclude(){
+  // label of max points
+  var points = 300;
+  // reject file if the number of words are not within specific range
+  if(wordCountTar < 1500 || wordCountTar > 4100){
+    console.log("Document is not of sufficient words and therefore rejected. \nProgram exited");
+  } else{
+    // compare both text and find the similarity
+    var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
+    console.log("\nSimilarity: "+(similarity*100)+" %");
+    if(similarity*100 <= 64 || similarity*100 >= 76){
+      if(similarity*100 <= 64){
+        console.log("Document Rejected as it does not have 100% relevant content");
+      } else if(similarity*100 >= 76){
+        console.log("Document rejected as too much of same content in the documents");
+      }
+    } else{
+      // calculate points for nouns
+        var baseVal = (5/100)*nounLenBase;
+        if(!((nounLenTar <= (nounLenBase+baseVal)) && (nounLenTar >= (nounLenBase-baseVal)))){
+          points += (nounLenBase-nounLenTar);
+        }
+
+      // calculate points for adjectives
+        baseVal = (5/100)*adjLenBase;
+        if(!((adjLenTar < (adjLenBase+baseVal)) && (adjLenTar > (adjLenBase-baseVal)))){
+          points += (adjLenBase-adjLenTar);
+        }
+
+      // calculate points for verbs
+        baseVal = (5/100)*verbLenBase;
+        if(!((verbLenTar < (verbLenBase+baseVal)) && (verbLenTar > (verbLenBase-baseVal)))){
+          points += (verbLenBase-verbLenTar);
+        }
+
+        console.log("Points(Out of 300): "+(points+similarity*100)/4);
+        // give remarks based on points calculated
+        if(((points+similarity*100)/4) < 250 || ((points+similarity*100)/4) > 300){
+          console.log("Remarks: You can write a better document");
+        } else{
+          if(((points+similarity*100)/4) > 275){
+            console.log("Remarks: Document seems good");
+          } else if(((points+similarity*100)/4) < 275){
+            console.log("Remarks: Document seems to be good but requires some updations to be made");
+          }
+        }
+    }
+  }
+}
+
+// function to calculate the number of nouns in a text
+function getNouns(text, type) {
+  if(type == "base"){
     wordpos.getNouns(text,function(result){
       nounLenBase = result.length;
     });
-		wordpos.getVerbs(text, function(result){
-      verbLenBase = result.length;
-    });
-		wordpos.getAdjectives(text, function(result){
-      adjLenBase = result.length;
-      // nounPerc();
-      // adjPerc();
-      // verbPerc();
-      console.log("Completed scanning base file");
-    });
-    baseText = text;
-  }
-})
-// console.log("Working...");
-
-
-console.log("Reading Target File");
-console.log("-----------Stats-----------");
-var ext = path.extname('Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx');
-var fname = path.basename('Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx', ext);
-console.log("File Name: "+fname+"\nFile Ext: "+ext);
-
-textract.fromFileWithPath('./HTML_Basics.docx', {preserveLineBreaks:true},function( error, text ) {
-  if(error) {
-      console.log("Cannot work with Target File");
-  } else {
-    wordCount = count(text);
+  } else if(type == "target"){
     wordpos.getNouns(text,function(result){
       nounLenTar = result.length;
     });
-		wordpos.getVerbs(text, function(result){
+  }
+}
+
+// function to calculate the number of verbs in a text
+function getVerbs(text, type) {
+  if(type == "base"){
+    wordpos.getVerbs(text, function(result){
+      verbLenBase = result.length;
+    });
+  } else if(type == "target"){
+    wordpos.getVerbs(text, function(result){
       verbLenTar = result.length;
     });
-		wordpos.getAdjectives(text, function(result){
-      adjLenTar = result.length;
-      console.log("Completed scanning Target file");
-      var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
-      console.log("similarity: "+similarity+" %");
-    });
-
-    targetText = text;
   }
-})
-// console.log("Working...");
+}
 
-
-// function conclude(){
-//     var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
-//     console.log(similarity);
-// }
-
-
-
-
-
-
-// var fs = require('fs');
-// var natural = require('natural');
-// var path = require('path');
-// var textract = require('textract');
-// var stringSimilarity = require('string-similarity');
-// var WordPOS = require('wordpos'),
-//     wordpos = new WordPOS();
-// //var string;
-// //console.log(content);
-// var bestDoc = fs.readFileSync('html-tags.txt','utf8');
-//
-// var address = '/home/sapient/Desktop/HTML_Basics.docx';
-// var wordcount;
-// var abc = path.basename(address);
-// var fname = abc.split('.');
-// var fext = path.extname(address);
-// console.log("Filename : "+fname[0]);
-// console.log("FileExtension : "+fext);
-//
-// textract.fromFileWithPath(address,{preserveLineBreaks:true}, function( error, text ) {
-// 	if(error)
-// 		console.log(error);
-// 	else{
-// 		//console.log(text);
-// 		wordcount = text.match(/\w+/g).length;
-// 		console.log("Wordcount : " +wordcount);
-// 		if(wordcount>=1500 && wordcount<=4000){
-// 		wordpos.getNouns(text, getNouns);
-// 		wordpos.getVerbs(text, getVerbs);
-// 		wordpos.getAdjectives(text, getAdjectives);
-// 		var similarity = stringSimilarity.compareTwoStrings(bestDoc,text);
-// 		console.log(similarity);
-// 		}
-// 		else{
-// 			console.log("Document rejected as wordcount not under permissible limits.");
-// 			console.log("Permissible limit : [1500-3000]");
-// 		}
-// 	}
-//
-// })
-//
-// function getNouns(result)
-// {
-// 	var NounPerc = (result.length/wordcount) * 500;
-// 	console.log("NounCount : "+NounPerc +"%");
-// }
-//
-// function getVerbs(result)
-// {
-// 	var VerbPerc = (result.length/wordcount) * 500;
-// 	console.log("VerbCount : "+VerbPerc +"%");
-// }
-//
-// function getAdjectives(result)
-// {
-// 	var AdjectivePerc = (result.length/wordcount) * 500;
-// 	console.log("AdjectiveCount : "+AdjectivePerc +"%");
-// }
-//
-
-// function nounPerc(){
-//   	var nounPerc = (nounLen/wordCount) * 500;
-//   	console.log("Noun Count : "+nounPerc +" %");
-// }
-//
-// function adjPerc(){
-//   	var adjPerc = (adjLen/wordCount) * 500;
-//   	console.log("Adjective Count : "+adjPerc +" %");
-// }
-//
-// function verbPerc(){
-//   	var verbPerc = (verbLen/wordCount) * 500;
-//   	console.log("Verb Count : "+verbPerc +" %");
-// }
-
-
-// var cont = tokenizer.tokenize("contenttext")
-// textract.fromFileWithPath('./en-US.dic', {preserveLineBreaks:true},function( error, text ) {
-//   if(error) {
-//       console.log("error");
-//   } else {
-//       var spellcheck = new natural.Spellcheck(text);
-//       console.log(spellcheck.isCorrect(cont));
-//   }
-// })
+// function to calculate the number of adjectives in a text
+function getAdj(text, type) {
+  if(type == "base"){
+    wordpos.getAdjectives(text, function(result){
+      adjLenBase = result.length;
+    });
+  } else if(type == "target"){
+    wordpos.getAdjectives(text, function(result){
+      adjLenTar = result.length;
+    });
+  }
+}
