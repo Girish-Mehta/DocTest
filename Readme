@@ -1,0 +1,3 @@
+This is a program written using Javascript and Nodejs.
+To run this, download all the files and go to terminal then type - "nodejs serverside.js"
+This program will compare two files and check how much similar they are to each other and then count the number of nouns, adjectives and verbs and basis of that it will tell you if your document seems genuine or not.
