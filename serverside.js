@@ -1,11 +1,15 @@
 const path = require('path');
 const fs = require('fs');
-var textract = require('textract');
-var count = require('word-count');
-var natural = require('natural');
-var WordPOS = require('wordpos'),
+const textract = require('textract');
+const count = require('word-count');
+const natural = require('natural');
+const tokenizer = new natural.WordTokenizer();
+const WordPOS = require('wordpos'),
     wordpos = new WordPOS();
-var stringSimilarity = require('string-similarity');
+const stringSimilarity = require('string-similarity');
+
+var baseFileAddress = "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx";
+var tarFileAddress = "Learning-HTML-CSS-and-Grid-960-in-an-hour.docx";
 var baseText;
 var targetText;
 var wordCountBase = 0;
@@ -17,75 +21,148 @@ var nounLenTar = 0;
 var adjLenTar = 0;
 var verbLenTar = 0;
 var isReady = false;
+var taskCount = 0;
+var status = 0;
 
-// start the program
-console.log("Program Started");
-console.log("\n\nReading Base File");
-console.log("-----------Stats-----------");
+var baseFile = {
+  name:"",
+  ext: "",
+  wordCount: 0,
+  nounCount: 0,
+  verbCount: 0,
+  adjCount: 0,
+};
 
-// print file name and extension of base file
-var ext = path.extname('Learning-HTML-CSS-and-Grid-960-in-an-hour.docx');
-var fname = path.basename('Learning-HTML-CSS-and-Grid-960-in-an-hour.docx', ext);
-console.log("File Name: "+fname+"\nFile Ext: "+ext);
+var tarFile = {
+  name:"",
+  ext: "",
+  wordCount: 0,
+  nounCount: 0,
+  verbCount: 0,
+  adjCount: 0,
+};
+
+
+var result = {
+  similarity: 0,
+  spellMistakeCount: 0,
+}
+
+function start(){
+  fileReadPromise(baseFileAddress,"base").then((message) => {
+    console.log(message);
+    completed();
+  })
+  .catch((message) => {
+    console.log(message);
+  });
+
+  fileReadPromise(tarFileAddress,"target").then((message) => {
+    console.log(message);
+    completed();
+  })
+  .catch((message) => {
+    console.log(message);
+  });
+}
+
+function completed() {
+  status++;
+  if(status == 2)
+    conclude();
+}
+
 
 // start reading the file
-textract.fromFileWithPath('./Learning-HTML-CSS-and-Grid-960-in-an-hour.docx', {preserveLineBreaks:true},function( error, text ) {
-  if(error) {
-      console.log("\nCannot work with Base File");
-  } else {
-    // save text for global function use
-    baseText = text;
-    // count words in file
-    wordCountBase = count(text);
-    // get count of nouns in file
-    getNouns(text,"base");
-    // get count of verbs in file
-    getVerbs(text,"base");
-    // get count of adjectives in file
-    getAdj(text,"base");
-    console.log("\nCompleted scanning base file");
-  }
-})
+function fileReadPromise(address, owner) {
+  var checkCount = 0;
+
+  return new Promise(function(resolve,reject){
+    textract.fromFileWithPath(address, {preserveLineBreaks:true},function( error, text ) {
+      function check(){
+        checkCount++;
+        if(checkCount % 3 == 0)
+          resolve("Completed scanning file: \'"+fname+ext+"\'")
+      }
+
+      var ext = path.extname(address);
+      var fname = path.basename(address, ext);
+      if(owner == "base"){
+        baseFile.ext = ext;
+        baseFile.name = fname;
+      } else if(owner == "target"){
+        tarFile.ext = ext;
+        tarFile.name = fname;
+      }
+
+      if(error) {
+          reject("\nCannot work with File: "+fname+ext);
+      } else {
+        // split words into array
+        tokenText = tokenizer.tokenize(text);
+
+        // save text for global function use
+        switch(owner){
+          case "base":baseText = text;
+                      baseFile.wordCount = tokenText.length;
+          // wordCountBase = tokenText.length;
+                      wordpos.getNouns(text,function(result){
+                        baseFile.nounCount = result.length;
+                        check();
+                      });
+                      wordpos.getAdjectives(text, function(result){
+                        baseFile.adjCount = result.length;
+                        check();
+                      });
+                      wordpos.getVerbs(text, function(result){
+                        baseFile.verbCount = result.length;
+                        check();
+                      });
+                      break;
+          case "target":targetText = text;
+                      // wordCountTar = tokenText.length;
+                      tarFile.wordCount = tokenText.length;
+                      wordpos.getNouns(text,function(result){
+                        tarFile.nounCount = result.length;
+                        check();
+                      });
+                      wordpos.getAdjectives(text, function(result){
+                        tarFile.adjCount = result.length;
+                        check();
+                      });
+                      wordpos.getVerbs(text, function(result){
+                        tarFile.verbCount = result.length;
+                        check();
+                      });
+                      break;
+          }
+        }
+    })
+  })
+}
 
 
-console.log("\n\nReading Target File");
-console.log("-----------Stats-----------");
-
-// print file name and extension of targer file
-var ext = path.extname('html.docx');
-var fname = path.basename('html.docx', ext);
-console.log("File Name: "+fname+"\nFile Ext: "+ext);
-
-// start reading file
-textract.fromFileWithPath('./html.docx', {preserveLineBreaks:true},function( error, text ) {
-  if(error) {
-      console.log("\nCannot work with Target File");
-  } else {
-    // save text for global function use
-    targetText = text;
-    // count words in file
-    wordCountTar = count(text);
-    // get count of nouns in file
-    getNouns(text,"target");
-    // get count of verbs in file
-    getVerbs(text,"target");
-    // get count of adjectives in file
-    getAdj(text,"target");
-    console.log("\nCompleted scanning Target file");
-    conclude();
-  }
-});
-
+//function to collect output
 function conclude(){
+
+  console.log(baseFile);
+  console.log(tarFile);
+
+  //display word count
+  console.log("\n"+wordCountTar);
+  console.log(wordCountBase);
+
+
   // label of max points
   var points = 300;
   // reject file if the number of words are not within specific range
-  if(wordCountTar < 1500 || wordCountTar > 4100){
+  if(tarFile.wordCount < 1500 || tarFile.wordCount > 4100){
     console.log("Document is not of sufficient words and therefore rejected. \nProgram exited");
   } else{
     // compare both text and find the similarity
     var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
     console.log("\nSimilarity: "+(similarity*100)+" %");
+    result.similarity = similarity*100;
     if(similarity*100 <= 64 || similarity*100 >= 76){
       if(similarity*100 <= 64){
         console.log("Document Rejected as it does not have 100% relevant content");
@@ -124,43 +201,13 @@ function conclude(){
         }
     }
   }
+  console.log(result);
 }
 
-// function to calculate the number of nouns in a text
-function getNouns(text, type) {
-  if(type == "base"){
-    wordpos.getNouns(text,function(result){
-      nounLenBase = result.length;
-    });
-  } else if(type == "target"){
-    wordpos.getNouns(text,function(result){
-      nounLenTar = result.length;
-    });
-  }
-}
 
-// function to calculate the number of verbs in a text
-function getVerbs(text, type) {
-  if(type == "base"){
-    wordpos.getVerbs(text, function(result){
-      verbLenBase = result.length;
-    });
-  } else if(type == "target"){
-    wordpos.getVerbs(text, function(result){
-      verbLenTar = result.length;
-    });
-  }
-}
-
-// function to calculate the number of adjectives in a text
-function getAdj(text, type) {
-  if(type == "base"){
-    wordpos.getAdjectives(text, function(result){
-      adjLenBase = result.length;
-    });
-  } else if(type == "target"){
-    wordpos.getAdjectives(text, function(result){
-      adjLenTar = result.length;
-    });
-  }
-}
+// start the program
+(()=>{
+  console.log("Program Started");
+  console.log("-----------Stats-----------");
+  start();
+})();
