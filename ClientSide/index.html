@@ -1,0 +1,152 @@
+<!Doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DocTest</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+  </head>
+  <body class="bg-primary text-center">
+
+    <div class="cover-container d-flex h-100 p-3 mx-auto flex-column text-white">
+      <header class="masthead mb-auto">
+        <div class="inner">
+          <h3 class="masthead-brand">DocTest</h3>
+        </div>
+      </header>
+
+      <main role="main" class="inner cover">
+        <h1 class="cover-heading">DocTest: Compare two documents</h1>
+        <p class="lead">Use DocTest to compare two documents and find out the difference</p>
+        <p class="lead">
+          <a href="#" class="btn btn-lg btn-info" data-toggle="modal" data-target="#outputModal" onClick='getData()'>Click to compare</a>
+        </p>
+      </main>
+
+
+<!-- Modal -->
+<div class="modal fade" id="outputModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Output</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>File Name: <p id="name_base"> </p></p>
+        <p>File Ext: <p id="ext_base"> </p></p>
+        <p>Word Count: <p id="wordCount_base"> </p></p>
+        <p>Noun Count: <p id="nounCount_base"> </p></p>
+        <p>Verb Count: <p id="verbCount_base"> </p></p>
+        <p>Adjective Count: <p id="adjCount_base"> </p></p>
+	<p>File Name: <p id="name_tar"> </p></p>
+        <p>File Ext: <p id="ext_tar"> </p></p>
+        <p>Word Count: <p id="wordCount_tar"> </p></p>
+        <p>Noun Count: <p id="nounCount_tar"> </p></p>
+        <p>Verb Count: <p id="verbCount_tar"> </p></p>
+        <p>Adjective Count: <p id="adjCount_tar"> </p></p>
+	<p>Status: <p id="status_result"> </p></p>
+        <p>Point: <p id="points_result"> </p></p>
+        <p>Similarity %: <p id="similarity_result"> </p></p>
+        <p>Remarks: <p id="remarks_result"> </p></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+
+
+
+
+<script type="text/javascript">
+function getData() {
+	var xmlhttp = new XMLHttpRequest();
+	var url = "http://localhost:3000/db";
+	xmlhttp.open("GET", url, true);
+	xmlhttp.send();
+
+	xmlhttp.onreadystatechange = function () {
+		if (this.readyState == 4 && this.status == 200) {
+			var myarr = JSON.parse(this.responseText);
+var baseFile = {
+  name:"",
+  ext: "",
+  wordCount: 0,
+  nounCount: 0,
+  verbCount: 0,
+  adjCount: 0,
+};
+
+var tarFile = {
+  name:"",
+  ext: "",
+  wordCount: 0,
+  nounCount: 0,
+  verbCount: 0,
+  adjCount: 0,
+};
+
+
+var result = {
+  status: "",
+  points: 0,
+  similarity: 0,
+  remarks: "",
+}
+			baseFile.name = JSON.stringify(baseFile.name);
+			baseFile.ext = JSON.stringify(baseFile.ext);
+			baseFile.wordCount = JSON.stringify(baseFile.wordCount);
+			baseFile.nounCount = JSON.stringify(baseFile.nounCount);
+			baseFile.verbCount = JSON.stringify(baseFile.verbCount);
+			baseFile.adjCount = JSON.stringify(baseFile.adjCount);
+			tarFile.name = JSON.stringify(tarFile.name);
+			tarFile.ext = JSON.stringify(tarFile.ext);
+			tarFile.wordCount = JSON.stringify(tarFile.wordCount);
+			tarFile.nounCount = JSON.stringify(tarFile.nounCount);
+			tarFile.verbCount = JSON.stringify(tarFile.verbCount);
+			tarFile.adjCount = JSON.stringify(tarFile.adjCount);			
+			result.status = JSON.stringify(result.status);
+			result.similarity = JSON.stringify(result.similarity);
+			result.remarks = JSON.stringify(result.remarks);
+
+			document.getElementById('Name_base').innerHTML = baseFile.name;
+			document.getElementById('ext_base').innerHTML = baseFile.ext;
+			document.getElementById('wordCount_base').innerHTML = baseFile.wordCount;
+			document.getElementById('nounCount_base').innerHTML = baseFile.nountCount;
+			document.getElementById('verbCount_base').innerHTML = baseFile.verbCount;
+			document.getElementById('adjCount_base').innerHTML = baseFile.adjCount;
+			document.getElementById('Name_tar').innerHTML = tarFile.Name;
+			document.getElementById('ext_tar').innerHTML = tarFile.ext;
+			document.getElementById('wordCount_tar').innerHTML = tarFile.wordCount;
+			document.getElementById('nounCount_tar').innerHTML = tarFile.nounCount;
+			document.getElementById('verbCount_tar').innerHTML = tarFile.verbCount;
+			document.getElementById('adjCount_tar').innerHTML = tarFile.adjCount;
+			document.getElementById('status_result').innerHTML = result.status;
+			document.getElementById('points_result').innerHTML = result.points;
+			document.getElementById('similarity_result').innerHTML = result.similarity;
+			document.getElementById('remarks_result').innerHTML = result.remarks;
+
+		}
+	};
+}
+</script>
+
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="/js/bootstrap.min.js"></script>
+  </body>
+</html>

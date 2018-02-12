@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour",
+    "ext": ".docx",
+    "wordCount": 3813,
+    "nounCount": 347,
+    "verbCount": 188,
+    "adjCount": 153
+  },
+  {
+    "name": "HTML_Basics",
+    "ext": ".docx",
+    "wordCount": 3709,
+    "nounCount": 387,
+    "verbCount": 209,
+    "adjCount": 174
+  },
+  {
+    "status": "Accepted",
+    "similarity": 76.03724496782144,
+    "spellMistakeCount": 0,
+    "remarks": "You can write a better document"
+  }
+]

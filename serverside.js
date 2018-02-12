@@ -9,7 +9,7 @@ const WordPOS = require('wordpos'),
 const stringSimilarity = require('string-similarity');
 
 var baseFileAddress = "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx";
-var tarFileAddress = "Learning-HTML-CSS-and-Grid-960-in-an-hour.docx";
+var tarFileAddress = "HTML_Basics.docx";
 var baseText;
 var targetText;
 var wordCountBase = 0;
@@ -23,6 +23,7 @@ var verbLenTar = 0;
 var isReady = false;
 var taskCount = 0;
 var status = 0;
+
 
 var baseFile = {
   name:"",
@@ -44,9 +45,13 @@ var tarFile = {
 
 
 var result = {
+  status: "",
+  points: 0,
   similarity: 0,
-  spellMistakeCount: 0,
+  remarks: "",
 }
+
+let data=[baseFile, tarFile, result];
 
 function start(){
   fileReadPromise(baseFileAddress,"base").then((message) => {
@@ -105,8 +110,8 @@ function fileReadPromise(address, owner) {
         switch(owner){
           case "base":baseText = text;
                       baseFile.wordCount = tokenText.length;
-          // wordCountBase = tokenText.length;
                       wordpos.getNouns(text,function(result){
+                        console.log("\nNouns used: "+result);
                         baseFile.nounCount = result.length;
                         check();
                       });
@@ -120,7 +125,6 @@ function fileReadPromise(address, owner) {
                       });
                       break;
           case "target":targetText = text;
-                      // wordCountTar = tokenText.length;
                       tarFile.wordCount = tokenText.length;
                       wordpos.getNouns(text,function(result){
                         tarFile.nounCount = result.length;
@@ -148,60 +152,71 @@ function conclude(){
   console.log(baseFile);
   console.log(tarFile);
 
-  //display word count
-  console.log("\n"+wordCountTar);
-  console.log(wordCountBase);
-
-
   // label of max points
-  var points = 300;
+  var points = 100;
   // reject file if the number of words are not within specific range
   if(tarFile.wordCount < 1500 || tarFile.wordCount > 4100){
-    console.log("Document is not of sufficient words and therefore rejected. \nProgram exited");
+    result.status = "Rejected";
+    result.remarks="Document is not of sufficient words and therefore rejected";
   } else{
+    result.status = "Accepted";
     // compare both text and find the similarity
     var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
     console.log("\nSimilarity: "+(similarity*100)+" %");
     result.similarity = similarity*100;
-    if(similarity*100 <= 64 || similarity*100 >= 76){
-      if(similarity*100 <= 64){
-        console.log("Document Rejected as it does not have 100% relevant content");
-      } else if(similarity*100 >= 76){
-        console.log("Document rejected as too much of same content in the documents");
-      }
-    } else{
       // calculate points for nouns
         var baseVal = (5/100)*nounLenBase;
         if(!((nounLenTar <= (nounLenBase+baseVal)) && (nounLenTar >= (nounLenBase-baseVal)))){
-          points += (nounLenBase-nounLenTar);
+          if(nounLenTar >= (nounLenBase-baseVal))
+            points -= (nounLenBase-nounLenTar);
+          else {
+              points += (nounLenBase-nounLenTar);
+            }
         }
 
       // calculate points for adjectives
         baseVal = (5/100)*adjLenBase;
-        if(!((adjLenTar < (adjLenBase+baseVal)) && (adjLenTar > (adjLenBase-baseVal)))){
-          points += (adjLenBase-adjLenTar);
+        if(!((adjLenTar <= (adjLenBase+baseVal)) && (adjLenTar >= (adjLenBase-baseVal)))){
+          if(adjLenTar >= (adjLenBase-baseVal)){
+            points -= (adjLenBase-adjLenTar);
+          }
+          else{
+            points += (adjLenBase-adjLenTar);
+          }
         }
 
       // calculate points for verbs
         baseVal = (5/100)*verbLenBase;
         if(!((verbLenTar < (verbLenBase+baseVal)) && (verbLenTar > (verbLenBase-baseVal)))){
-          points += (verbLenBase-verbLenTar);
+          if(verbLenTar > (verbLenBase-baseVal))
+            points += (verbLenBase-verbLenTar);
+          else
+            points -= (verbLenBase-verbLenTar);
         }
 
-        console.log("Points(Out of 300): "+(points+similarity*100)/4);
+        console.log("Points: "+(points+similarity*100)/4);
+	result.points = (points+similarity*100)/4
         // give remarks based on points calculated
-        if(((points+similarity*100)/4) < 250 || ((points+similarity*100)/4) > 300){
-          console.log("Remarks: You can write a better document");
-        } else{
-          if(((points+similarity*100)/4) > 275){
-            console.log("Remarks: Document seems good");
-          } else if(((points+similarity*100)/4) < 275){
-            console.log("Remarks: Document seems to be good but requires some updations to be made");
-          }
+        if(((points+similarity*100)/4) > 75 && ((points+similarity*100)/4) < 100){
+          result.remarks="Document seems good";
+        } else if(((points+similarity*100)/4) < 75){
+            result.remarks="You can write a better document";
+        } else {
+            result.remarks="Document seems to be good but requires some updations to be made";
         }
-    }
+    // }
   }
   console.log(result);
+  // data.map(data=> {
+  //
+  // });
+  let json = JSON.stringify(data,null,2);
+  fs.writeFile('data.json',json,'utf8',(err) => {
+    if(err){
+      console.log("error");
+    }
+    console.log("done");
+  })
 }
 
 
