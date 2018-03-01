@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs');
 const textract = require('textract');
-const count = require('word-count');
 const natural = require('natural');
 const tokenizer = new natural.WordTokenizer();
 const WordPOS = require('wordpos'),
@@ -23,7 +22,7 @@ var verbLenTar = 0;
 var isReady = false;
 var taskCount = 0;
 var status = 0;
-
+var outp = "output";
 
 var baseFile = {
   name:"",
@@ -49,9 +48,11 @@ var result = {
   points: 0,
   similarity: 0,
   remarks: "",
-}
+};
 
-let data=[baseFile, tarFile, result];
+let oupt=[baseFile, tarFile, result];
+
+let data = {outp:oupt};
 
 function start(){
   fileReadPromise(baseFileAddress,"base").then((message) => {
