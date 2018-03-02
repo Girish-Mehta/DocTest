@@ -1,14 +1,21 @@
 const path = require('path');
 const fs = require('fs');
-const textract = require('textract');
 const natural = require('natural');
-const tokenizer = new natural.WordTokenizer();
 const WordPOS = require('wordpos'),
-    wordpos = new WordPOS();
+  wordpos = new WordPOS();
+const tokenizer = new natural.WordTokenizer();
 const stringSimilarity = require('string-similarity');
+var base_folder = path.join(path.dirname(require.resolve("natural")), "brill_pos_tagger");
+var rulesFilename = base_folder + "/data/English/tr_from_posjs.txt";
+var lexiconFilename = base_folder + "/data/English/lexicon_from_posjs.json";
+var defaultCategory = 'N';
 
-var baseFileAddress = "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.docx";
-var tarFileAddress = "HTML_Basics.docx";
+var lexicon = new natural.Lexicon(lexiconFilename, defaultCategory);
+var rules = new natural.RuleSet(rulesFilename);
+var tagger = new natural.BrillPOSTagger(lexicon, rules);
+
+var baseFileAddress = "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour.txt";
+var tarFileAddress = "HTML_Basics.txt";
 var baseText;
 var targetText;
 var wordCountBase = 0;
@@ -21,8 +28,6 @@ var adjLenTar = 0;
 var verbLenTar = 0;
 var isReady = false;
 var taskCount = 0;
-var status = 0;
-var outp = "output";
 
 var baseFile = {
   name:"",
@@ -52,98 +57,62 @@ var result = {
 
 let oupt=[baseFile, tarFile, result];
 
-let data = {outp:oupt};
+let data = {output:oupt};
 
 function start(){
-  fileReadPromise(baseFileAddress,"base").then((message) => {
-    console.log(message);
-    completed();
-  })
-  .catch((message) => {
-    console.log(message);
-  });
+  fileReadPromise(baseFileAddress,"base");
 
-  fileReadPromise(tarFileAddress,"target").then((message) => {
-    console.log(message);
-    completed();
-  })
-  .catch((message) => {
-    console.log(message);
-  });
+  fileReadPromise(tarFileAddress,"target");
+
+  conclude();
 }
-
-function completed() {
-  status++;
-  if(status == 2)
-    conclude();
-}
-
 
 // start reading the file
 function fileReadPromise(address, owner) {
-  var checkCount = 0;
+  var text = fs.readFileSync(address,"utf8");
+  var ext = path.extname(address);
+  var fname = path.basename(address, ext);
+  if(owner == "base"){
+    baseFile.ext = ext;
+    baseFile.name = fname;
+  } else if(owner == "target"){
+    tarFile.ext = ext;
+    tarFile.name = fname;
+  }
 
-  return new Promise(function(resolve,reject){
-    textract.fromFileWithPath(address, {preserveLineBreaks:true},function( error, text ) {
-      function check(){
-        checkCount++;
-        if(checkCount % 3 == 0)
-          resolve("Completed scanning file: \'"+fname+ext+"\'")
-      }
+  // split words into array
+  tokenText = tokenizer.tokenize(text);
 
-      var ext = path.extname(address);
-      var fname = path.basename(address, ext);
-      if(owner == "base"){
-        baseFile.ext = ext;
-        baseFile.name = fname;
-      } else if(owner == "target"){
-        tarFile.ext = ext;
-        tarFile.name = fname;
-      }
+  // get tagger pairs from array
+  var taggerJSON=tagger.tag(tokenText);
 
-      if(error) {
-          reject("\nCannot work with File: "+fname+ext);
-      } else {
-        // split words into array
-        tokenText = tokenizer.tokenize(text);
-
-        // save text for global function use
-        switch(owner){
-          case "base":baseText = text;
-                      baseFile.wordCount = tokenText.length;
-                      wordpos.getNouns(text,function(result){
-                        console.log("\nNouns used: "+result);
-                        baseFile.nounCount = result.length;
-                        check();
-                      });
-                      wordpos.getAdjectives(text, function(result){
-                        baseFile.adjCount = result.length;
-                        check();
-                      });
-                      wordpos.getVerbs(text, function(result){
-                        baseFile.verbCount = result.length;
-                        check();
-                      });
-                      break;
-          case "target":targetText = text;
-                      tarFile.wordCount = tokenText.length;
-                      wordpos.getNouns(text,function(result){
-                        tarFile.nounCount = result.length;
-                        check();
-                      });
-                      wordpos.getAdjectives(text, function(result){
-                        tarFile.adjCount = result.length;
-                        check();
-                      });
-                      wordpos.getVerbs(text, function(result){
-                        tarFile.verbCount = result.length;
-                        check();
-                      });
-                      break;
-          }
-        }
-    })
-  })
+  // save text for global function use
+  switch(owner){
+    case "base":baseText = text;
+                baseFile.wordCount = tokenText.length;
+                for(var pair of taggerJSON){
+                  if(pair[1] == "NN" || pair[1] == "NNP" || pair[1] == "NNPS"){
+                    baseFile.nounCount++;
+                  } else if(pair[1] == "VB" || pair[1] == "VBD" || pair[1] == "VBG" || pair[1] == "VBN" || pair[1] == "VBP" || pair[1] == "VBZ"){
+                    baseFile.verbCount++;
+                  } else if(pair[1] == "JJ" || pair[1] == "JJR" || pair[1] == "JJS"){
+                    baseFile.adjCount++;
+                  }
+                }
+                break;
+    case "target":targetText = text;
+              tarFile.wordCount = tokenText.length;
+              for(var pair of taggerJSON){
+                if(pair[1] == "NN" || pair[1] == "NNP" || pair[1] == "NNPS"){
+                  tarFile.nounCount++;
+                } else if(pair[1] == "VB" || pair[1] == "VBD" || pair[1] == "VBG" || pair[1] == "VBN" || pair[1] == "VBP" || pair[1] == "VBZ"){
+                  tarFile.verbCount++;
+                } else if(pair[1] == "JJ" || pair[1] == "JJR" || pair[1] == "JJS"){
+                  tarFile.adjCount++;
+                }
+              }
+              break;
+  }
 }
 
 
@@ -205,7 +174,6 @@ function conclude(){
         } else {
             result.remarks="Document seems to be good but requires some updations to be made";
         }
-    // }
   }
   console.log(result);
   // data.map(data=> {

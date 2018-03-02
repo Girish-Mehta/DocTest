@@ -1,0 +1,26 @@
+{
+  "output": [
+    {
+      "name": "Learning-HTML-CSS-and-Bootstrap-4-in-an-hour",
+      "ext": ".txt",
+      "wordCount": 3813,
+      "nounCount": 752,
+      "verbCount": 645,
+      "adjCount": 160
+    },
+    {
+      "name": "HTML_Basics",
+      "ext": ".txt",
+      "wordCount": 3711,
+      "nounCount": 941,
+      "verbCount": 513,
+      "adjCount": 187
+    },
+    {
+      "status": "Accepted",
+      "points": 43.631939498762165,
+      "similarity": 74.52775799504866,
+      "remarks": "You can write a better document"
+    }
+  ]
+}
