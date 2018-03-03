@@ -1,10 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const natural = require('natural');
-const WordPOS = require('wordpos'),
-  wordpos = new WordPOS();
 const tokenizer = new natural.WordTokenizer();
-const stringSimilarity = require('string-similarity');
 var base_folder = path.join(path.dirname(require.resolve("natural")), "brill_pos_tagger");
 var rulesFilename = base_folder + "/data/English/tr_from_posjs.txt";
 var lexiconFilename = base_folder + "/data/English/lexicon_from_posjs.json";
@@ -46,7 +43,6 @@ var tarFile = {
   verbCount: 0,
   adjCount: 0,
 };
-
 
 var result = {
   status: "",
@@ -112,7 +108,7 @@ function fileReadPromise(address, owner) {
                 }
               }
               break;
-  }
+    }
 }
 
 
@@ -129,56 +125,56 @@ function conclude(){
     result.status = "Rejected";
     result.remarks="Document is not of sufficient words and therefore rejected";
   } else{
-    result.status = "Accepted";
-    // compare both text and find the similarity
-    var similarity = stringSimilarity.compareTwoStrings(baseText, targetText);
-    console.log("\nSimilarity: "+(similarity*100)+" %");
-    result.similarity = similarity*100;
+      result.status = "Accepted";
+      // compare both text and find the similarity
+      var similarity = parseInt((natural.JaroWinklerDistance(baseText,targetText))*100);
+      console.log("\nSimilarity: "+(similarity)+"%");
+      result.similarity = similarity;
+
       // calculate points for nouns
-        var baseVal = (5/100)*nounLenBase;
-        if(!((nounLenTar <= (nounLenBase+baseVal)) && (nounLenTar >= (nounLenBase-baseVal)))){
-          if(nounLenTar >= (nounLenBase-baseVal))
-            points -= (nounLenBase-nounLenTar);
-          else {
-              points += (nounLenBase-nounLenTar);
-            }
-        }
+      var baseVal = (5/100)*nounLenBase;
+      if(!((nounLenTar <= (nounLenBase+baseVal)) && (nounLenTar >= (nounLenBase-baseVal)))){
+        if(nounLenTar >= (nounLenBase-baseVal))
+          points -= (nounLenBase-nounLenTar);
+        else {
+            points += (nounLenBase-nounLenTar);
+          }
+      }
 
       // calculate points for adjectives
-        baseVal = (5/100)*adjLenBase;
-        if(!((adjLenTar <= (adjLenBase+baseVal)) && (adjLenTar >= (adjLenBase-baseVal)))){
-          if(adjLenTar >= (adjLenBase-baseVal)){
-            points -= (adjLenBase-adjLenTar);
-          }
-          else{
-            points += (adjLenBase-adjLenTar);
-          }
+      baseVal = (5/100)*adjLenBase;
+      if(!((adjLenTar <= (adjLenBase+baseVal)) && (adjLenTar >= (adjLenBase-baseVal)))){
+        if(adjLenTar >= (adjLenBase-baseVal)){
+          points -= (adjLenBase-adjLenTar);
         }
+        else{
+          points += (adjLenBase-adjLenTar);
+        }
+      }
 
       // calculate points for verbs
-        baseVal = (5/100)*verbLenBase;
-        if(!((verbLenTar < (verbLenBase+baseVal)) && (verbLenTar > (verbLenBase-baseVal)))){
-          if(verbLenTar > (verbLenBase-baseVal))
-            points += (verbLenBase-verbLenTar);
-          else
-            points -= (verbLenBase-verbLenTar);
-        }
+      baseVal = (5/100)*verbLenBase;
+      if(!((verbLenTar < (verbLenBase+baseVal)) && (verbLenTar > (verbLenBase-baseVal)))){
+        if(verbLenTar > (verbLenBase-baseVal))
+          points += (verbLenBase-verbLenTar);
+        else
+          points -= (verbLenBase-verbLenTar);
+      }
 
-        console.log("Points: "+(points+similarity*100)/4);
-	result.points = (points+similarity*100)/4
-        // give remarks based on points calculated
-        if(((points+similarity*100)/4) > 75 && ((points+similarity*100)/4) < 100){
-          result.remarks="Document seems good";
-        } else if(((points+similarity*100)/4) < 75){
-            result.remarks="You can write a better document";
-        } else {
-            result.remarks="Document seems to be good but requires some updations to be made";
-        }
+      console.log("Points: "+(points+similarity)/2);
+	    // result.points = (points+similarity*100)/4;
+      result.points = (points+similarity)/2;
+      // give remarks based on points calculated
+      if(result.points > 75 && result.points < 100){
+        result.remarks="Document seems good";
+      } else if(((points+similarity*100)/4) < 75){
+          result.remarks="You can write a better document";
+      } else {
+          result.remarks="Document seems to be good but requires some updations to be made";
+      }
   }
+
   console.log(result);
-  // data.map(data=> {
-  //
-  // });
   let json = JSON.stringify(data,null,2);
   fs.writeFile('data.json',json,'utf8',(err) => {
     if(err){
